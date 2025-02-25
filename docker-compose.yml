@@ -1,0 +1,33 @@
+services:
+  backend:
+    container_name: server
+    build:
+      context: ./server
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./server:/server
+    networks:
+      - blog-network
+    env_file:
+      - .env
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:5.0
+    container_name: database
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - blog-network
+
+volumes:
+  mongo_data:
+    name: mongo_data
+
+networks:
+  blog-network:
+    name: blog-network
