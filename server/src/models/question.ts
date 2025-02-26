@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IQuestion extends Document {
-  text: string;
+  question: string;
   options: string[];
   correctAnswer: string;
   categories: mongoose.Types.ObjectId[];
@@ -9,7 +9,7 @@ export interface IQuestion extends Document {
 
 const QuestionSchema: Schema = new Schema(
   {
-    text: { type: String, required: true, trim: true },
+    question: { type: String, required: true, trim: true },
     options: { type: [String], required: true },
     correctAnswer: { type: String, required: true },
     categories: [{ type: Schema.Types.ObjectId, ref: "Category", required: true }],
