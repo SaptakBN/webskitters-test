@@ -53,10 +53,9 @@ const sendVerificationEmail = async (email: string, token: string) => {
     host: "smtp.gmail.com",
     secure: false,
     auth: {
-      user: "saptakb738@gmail.com",
-      pass: "felx mewl zwbg rxxa",
+      user: process.env.EMAIL,
+      pass: process.env.EMAIL_PASS,
     },
-    // auth: { user: process.env.EMAIL, pass: process.env.EMAIL_PASS },
   });
 
   await transporter.sendMail({

@@ -1,14 +1,16 @@
-# Blog CRUD (Node.js, Express, MongoDB, React and TypeScript)
+# Webskitters interview test (Node.js, Express, MongoDB)
 
 ## 📌 Overview
 
-This is a **Blog CRUD** built using **Node.js, Express, MongoDB, React and TypeScript**. It allows users to register, authenticate via JWT, create and manage blog posts, and includes an admin approval system before posts are published.
+This is a **Webskitters interview test** built using **Node.js, Express, MongoDB**. It allows users to register, authenticate via JWT, create and manage question answers and categories.
 
 ## 🚀 Features
 
 - **User Authentication** with JWT
-- **CRUD operations** for blog posts
-- **Admin Approval System** (only approved posts are listed)
+- **Email verification** through nodemailer
+- **Seeding of Categories**
+- **CSV import**
+- **CRUD operations** for questions and answers
 - **MongoDB Integration** with Mongoose
 - **TypeScript Support**
 - **Environment Variable Configuration**
@@ -16,78 +18,81 @@ This is a **Blog CRUD** built using **Node.js, Express, MongoDB, React and TypeS
 
 ## 🛠️ Installation
 
-### ⚠️ Make sure you have pnpm installed, if not
+### 1. Clone the repository
 
 ```sh
-npm install -g pnpm
+git clone https://github.com/SaptakBN/webskitters-test.git
+cd webskitters-test
 ```
 
-### 1️⃣ Clone the repository
+### 2. Go inside server directory and install dependencies
 
 ```sh
-git clone https://github.com/SaptakBN/interview-crud.git
-cd interview-crud
+cd server
+npm i
 ```
 
-### 2️⃣ Setting up dependency and launching docker containers
+### 2. Due to security reasons i have not shared my smtp details
+
+> Please go to the .env and change the EMAIL and EMAIL_PASS to valid smtp otherwise email verification will not work
+
+### 3. Move to Root directory and launching docker containers
 
 ```sh
+cd ..
 npm start
 ```
 
-### 3️⃣ Server should be listning on
+### 4. Server should be listning on
 
 ```sh
 http://localhost:5000
 ```
 
-### 4️⃣ Client should be listning on
+### 5. Database should be listning on
 
 ```sh
-http://localhost:3000
+mongodb://localhost:27018/test
 ```
 
-### 5️⃣ Database should be listning on
+### 6. Sample file for csv has been provided in the root directory for bulk question intert
 
 ```sh
-mongodb://localhost:27018/blogDB
-```
-
-### 🔑 Admin Credentials
-
-> Admin user already seeded to database.
-> Use this user to approve blog posts.
-
-```sh
-email: admin@gmail.com
-password: 123456
+sample.csv
 ```
 
 ## 📌 API Endpoints
 
 ### 🟢 User Authentication
 
-| Method | Endpoint        | Description                    |
-| ------ | --------------- | ------------------------------ |
-| POST   | `/api/register` | Register a new user            |
-| POST   | `/api/login`    | Authenticate user & return JWT |
+| Method | Endpoint             | Description                    |
+| ------ | -------------------- | ------------------------------ |
+| POST   | `/api/register`      | Register a new user            |
+| POST   | `/api/login`         | Authenticate user & return JWT |
+| GET    | `/api/verify/:token` | Verify user email              |
 
-### 📝 Blog Post Management
+### 👤 User Management
 
-| Method | Endpoint        | Description                                      |
-| ------ | --------------- | ------------------------------------------------ |
-| GET    | `/api/blog`     | Get all **approved** blog posts (sorted by date) |
-| POST   | `/api/blog`     | Create a new blog post (default: pending)        |
-| GET    | `/api/blog/:id` | Get a single blog post by ID                     |
-| PUT    | `/api/blog/:id` | Update a blog post (author only)                 |
-| DELETE | `/api/blog/:id` | Delete a blog post (author only)                 |
+| Method | Endpoint                   | Description                               |
+| ------ | -------------------------- | ----------------------------------------- |
+| GET    | `/api/user/profile`        | Get user profile (auth required)          |
+| PUT    | `/api/user/profile/update` | Update user profile (auth + image upload) |
 
-### 🔑 Admin Actions
+### 🏷️ Category Management
 
-| Method | Endpoint            | Description                                                  |
-| ------ | ------------------- | ------------------------------------------------------------ |
-| GET    | `/api/blog/pending` | Get all **pending** blog posts (sorted by date) (admin only) |
-| PATCH  | `/api/admin/:id`    | Approve a blog post (admin only)                             |
+| Method | Endpoint                       | Description                                        |
+| ------ | ------------------------------ | -------------------------------------------------- |
+| GET    | `/api/category/`               | Get all categories (auth required)                 |
+| GET    | `/api/category/question-count` | Get categories with question count (auth required) |
+| GET    | `/api/category/:categoryId`    | Get questions by category (auth required)          |
+
+### ❓ Question Management
+
+| Method | Endpoint                           | Description                                   |
+| ------ | ---------------------------------- | --------------------------------------------- |
+| POST   | `/api/question/upload`             | Upload questions via CSV (auth + file upload) |
+| POST   | `/api/question/answer/:questionId` | Answer a specific question (auth required)    |
+| GET    | `/api/question/search`             | Search questions with answers (auth required) |
 
 ### ℹ️ Other Commands
 
@@ -114,5 +119,3 @@ npm run restart
 ```sh
 npm run stop
 ```
-# webskitters-test
-# webskitters-test
