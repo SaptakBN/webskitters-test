@@ -14,39 +14,56 @@ export const uploadQuestions = async (req: AuthRequest, res: Response, next: Nex
     }
 
     const filePath = path.join(__dirname, "../../public/uploads/csv", req.file.filename);
-
     const questions: any[] = [];
 
-    fs.createReadStream(filePath)
-      .pipe(csv())
-      .on("data", async (row) => {
-        try {
-          // Fetch category IDs from names
-          const categoryNames = row.categories.split("|").map((c: string) => c.trim());
-          const categories = await Category.find({ name: { $in: categoryNames } });
-          const categoryIds = categories.map((cat) => cat._id);
-          const question = {
-            text: row.text,
-            options: row.options.split("|"),
-            correctAnswer: row.correctAnswer,
-            categoryIds,
-          };
-          console.log(question);
-          // Prepare question object
-          questions.push(question);
-        } catch (err) {
-          console.error("Error processing row:", err);
-        }
-      })
-      .on("end", async () => {
-        console.log("CSV file successfully processed", questions);
-        // Insert all questions into MongoDB
-        // await Question.insertMany(questions);
-        res.status(200).json({ message: "Questions uploaded successfully" });
+    const processCSV = () => {
+      return new Promise<void>((resolve, reject) => {
+        const promises: Promise<void>[] = [];
 
-        // Remove the file after processing
-        // fs.unlinkSync(filePath);
+        fs.createReadStream(filePath)
+          .pipe(csv())
+          .on("data", (row) => {
+            promises.push(
+              (async () => {
+                try {
+                  const categoryNames = row.categories.split("|").map((c: string) => c.trim());
+                  const categories = await Category.find({ name: { $in: categoryNames } });
+                  const categoryIds = categories.map((cat) => cat._id);
+
+                  const question = {
+                    text: row.text,
+                    options: row.options.split("|"),
+                    correctAnswer: row.correctAnswer,
+                    categoryIds,
+                  };
+
+                  questions.push(question);
+                } catch (err) {
+                  console.error("Error processing row:", err);
+                }
+              })()
+            );
+          })
+          .on("end", async () => {
+            await Promise.all(promises); // Ensure all rows are processed before proceeding
+            resolve();
+          })
+          .on("error", (error) => reject(error));
       });
+    };
+
+    await processCSV(); // Wait for CSV processing to complete
+
+    console.log("CSV file successfully processed", questions);
+
+    if (questions.length > 0) {
+      //   await Question.insertMany(questions); // Insert questions only if not empty
+    }
+
+    res.status(200).json({ message: "Questions uploaded successfully", count: questions.length });
+
+    // Remove the file after processing
+    fs.unlinkSync(filePath);
   } catch (error) {
     console.error("Error uploading questions:", error);
     next(error);
