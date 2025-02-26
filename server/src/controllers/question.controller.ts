@@ -4,6 +4,7 @@ import path from "path";
 import csv from "csv-parser";
 import Question from "../models/question";
 import Category from "../models/category";
+import Answer from "../models/answer";
 import { AuthRequest } from "../middleware/auth.middleware";
 
 export const uploadQuestions = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -19,6 +20,7 @@ export const uploadQuestions = async (req: AuthRequest, res: Response, next: Nex
 
     for (const question of questions) {
       const categories = [];
+      console.log(question);
       if (!question.categoryNames.length || !question.question || !question.options.length || !question.correctAnswer) {
         res.json({ message: "Invalid question data" });
         return;
@@ -63,13 +65,13 @@ const processCSV = (filePath: string) => {
         promises.push(
           (async () => {
             try {
-              const options = row.options.split("|");
+              const options = row.options.trim().split("|");
               const categoryNames = row.categories.split("|").map((c: string) => c.trim());
 
               const question = {
-                question: row.question,
+                question: row.question.trim(),
                 options: options,
-                correctAnswer: row.correctAnswer,
+                correctAnswer: row.correctAnswer.trim(),
                 categoryNames,
               };
 
@@ -86,4 +88,29 @@ const processCSV = (filePath: string) => {
       })
       .on("error", (error) => reject(error));
   });
+};
+
+export const answerQuestion = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  const { questionId } = req.params;
+  const { answer } = req.body;
+
+  try {
+    const question = await Question.findById(questionId);
+    if (!question) {
+      res.status(404).json({ message: "Question not found" });
+      return;
+    }
+
+    const isCorrect = String(question.correctAnswer).trim() === String(answer).trim();
+
+    const updatedAnswer = await Answer.findOneAndUpdate(
+      { questionId, userId: req.user?._id },
+      { answer, isCorrect },
+      { upsert: true, new: true }
+    );
+
+    res.status(200).json({ message: "Answer submitted successfully", answer: updatedAnswer });
+  } catch (error) {
+    next(error);
+  }
 };
