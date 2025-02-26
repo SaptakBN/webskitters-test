@@ -29,3 +29,28 @@ export const getQuestionsByCategory = async (req: AuthRequest, res: Response, ne
     next(error);
   }
 };
+
+export const getCategoriesWithQuestionCount = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const categories = await Category.aggregate([
+      {
+        $lookup: {
+          from: "questions",
+          localField: "_id",
+          foreignField: "categories",
+          as: "questions",
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          totalQuestions: { $size: "$questions" },
+        },
+      },
+    ]);
+
+    res.status(200).json({ categories });
+  } catch (error) {
+    next(error);
+  }
+};

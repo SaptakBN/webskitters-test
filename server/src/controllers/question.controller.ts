@@ -6,6 +6,7 @@ import Question from "../models/question";
 import Category from "../models/category";
 import Answer from "../models/answer";
 import { AuthRequest } from "../middleware/auth.middleware";
+import moment from "moment-timezone";
 
 export const uploadQuestions = async (req: AuthRequest, res: Response, next: NextFunction) => {
   if (!req.file) {
@@ -110,6 +111,63 @@ export const answerQuestion = async (req: AuthRequest, res: Response, next: Next
     );
 
     res.status(200).json({ message: "Answer submitted successfully", answer: updatedAnswer });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const searchQuestionWithAnswer = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { searchText, timezone } = req.query;
+
+    if (!searchText || !timezone) {
+      res.status(400).json({ message: "Missing required query parameters" });
+      return;
+    }
+    const search = (searchText as string)?.trim();
+    const words = search.split(/\s+/);
+
+    const regexPatterns = words.map((word: string) => ({
+      question: { $regex: word, $options: "i" },
+    }));
+
+    const question = await Question.findOne({
+      $or: regexPatterns,
+    });
+
+    if (!question) {
+      res.status(404).json({ message: "Question not found" });
+      return;
+    }
+
+    const answer = await Answer.find({ questionId: question._id })
+      .populate({
+        path: "questionId",
+        populate: { path: "categories" },
+      })
+      .populate({
+        path: "userId",
+        select: "-password",
+      });
+
+    if (!answer) {
+      res.status(404).json({ message: "User has not answered this question" });
+      return;
+    }
+
+    const formattedAnswer = answer.map((ans) => ({
+      answer: ans.answer,
+      isCorrect: ans.isCorrect,
+      createdAt: ans.createdAt,
+      updatedAt: ans.updatedAt,
+      submuttedAt: moment(ans.createdAt)
+        .tz(timezone as string)
+        .format("YYYY-MM-DD HH:mm:ss"),
+      question: ans.questionId,
+      user: ans.userId,
+    }));
+
+    res.status(200).json(formattedAnswer);
   } catch (error) {
     next(error);
   }
